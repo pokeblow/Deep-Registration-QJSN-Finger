@@ -101,23 +101,17 @@ def predict(moving, fixed, moving_seg, fixed_seg, length, filename, save, output
     plt.imshow(moving)
     plt.show()
     print(moving.shape)
-    # 选择设备，有cuda用cuda，没有就用cpu
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    # 加载网络，图片单通道，分类为1。
     net = Registration_ResCNN_3()
-    # 加载模型参数
-    # best_model_0127 best_model_0217_P
     net.load_state_dict(torch.load('../model/parameters/best_model_0301.pth', map_location='cpu'))
-    # 将网络拷贝到deivce中
     net.to(device=device)
-    # 测试模式
     net.eval()
     criterion = nn.MSELoss(size_average=1, reduce=0)
     criterion2 = nn.MSELoss()
 
     transform = transforms.Compose([transforms.Resize((224, 224)),
                                     transforms.ToTensor()])
-    # 将数据转为图片
+                                    
     moving = transform(Image.fromarray(moving))
     fixed = transform(Image.fromarray(fixed))
     moving_seg = transform(Image.fromarray(moving_seg))
@@ -133,7 +127,6 @@ def predict(moving, fixed, moving_seg, fixed_seg, length, filename, save, output
     fixed_seg = np.array(fixed_seg)
     fixed_seg = np.array([fixed_seg])
 
-    # 转为tensor
     moving_tensor = torch.from_numpy(moving)
     moving_tensor = moving_tensor.to(device=device, dtype=torch.float32)
 
@@ -164,7 +157,7 @@ def predict(moving, fixed, moving_seg, fixed_seg, length, filename, save, output
     loss_val = criterion2(moving_tensor_pre, fixed_tensor_pre)
     loss_map_org = loss.detach().numpy()[0][0]
 
-    # 预测
+    # predict
     moving_reg, fixed_crop, output = net(moving_tensor, fixed_tensor, moving_seg_tensor, fixed_seg_tensor)
     result = output.detach().numpy()[0]
 
@@ -309,125 +302,25 @@ def predict(moving, fixed, moving_seg, fixed_seg, length, filename, save, output
     plt.axis('off')
 
     plt.subplots_adjust(left=0.01, bottom=0.1, right=0.99, top=0.95, wspace=0.03, hspace=0.2)
-    file_name = output_path + '/{}.png'.format(filename)
-    if save:
-        # plt.savefig(file_name, transparent=False, dpi=300)
 
-        # contain = [filename[:3], filename[4:7], filename[9], filename[13],
-        #            upper_result[3] * (length / 224),
-        #            lower_result[3] * (length / 224),
-        #            ((upper_result - lower_result)[3] * (length / 224 * 0.175))]
-        #
-        # contain = ','.join(str(v) for v in contain)
-
-        # f_test = open(output_path + 'JSN.txt', 'a')
-        # f_test.writelines(contain)
-        # f_test.write('\n')
-        # f_test.close()
-
-        # if loss_result < 0.002:
-        #     file_name_3 = '../Result/Registration_image/normal/{}/{}.png'.format(joint, filename)
-        #     plt.savefig(file_name_3, transparent=False, dpi=300)
-
-        # if ((np.abs(upper_result[1]) > 0.05) or (np.abs(lower_result[1]) > 0.05)) and loss_result < 0.01:
-        #     file_name_2 = '../Result/Registration_image/rotation' + '/{}.png'.format(filename)
-        #     plt.savefig(file_name_2, transparent=False, dpi=300)
-        # if ((np.abs(upper_result[0] - 1) > 0.05) or (np.abs(lower_result[0] - 1) > 0.05)) and loss_result < 0.01:
-        #     file_name_2 = '../Result/Registration_image/scaling' + '/{}.png'.format(filename)
-        #     plt.savefig(file_name_2, transparent=False, dpi=300)
-        #     print('{} {} Scaling Get'.format(joint, filename))
-        #     plt.clf()
-        if loss_val > 0.02 and loss_result < 0.02:
-            file_name_2 = '../Result/Registration_image/invasion' + '/{}.png'.format(filename)
-            plt.savefig(file_name_2, transparent=False, dpi=300)
-            print('{} {} Invasion Get'.format(joint, filename))
-            plt.clf()
-            return True
-        else:
-            return False
-
-    else:
-        plt.show()
+    plt.show()
 
 if __name__ == "__main__":
-    # root_path = '../Data/finger_joint_all_dataset/'
-    root_path = '../Data/hongkong_data_2/test_L/'
-
-    '''
-    single picture
-    '''
     output_path = '../Result/Registration_image/scaling'
-    filename = '053_0_1_001'
-    # 053_0_1_001 001_2_2_003
-    filename2 = '053_0_1_002'
+
     joint = filename[4:7]
-    # moving_path = root_path + 'moving/{}.bmp'.format(filename)
-    # fixed_path = root_path + 'fixed/{}.bmp'.format(filename)
-    moving_path = '../Data/hongkong_data_2/data_L/0/1_1/1_4.bmp'
-    fixed_path = '../Data/hongkong_data_2/data_L/0/1_1/3_4.bmp'
-    # moving_seg_path = root_path + 'moving_seg/{}.bmp'.format(filename2)
-    # fixed_seg_path = root_path + 'fixed_seg/{}.bmp'.format(filename2)
-    moving = np.array(Image.open(moving_path))
-    fixed = np.array(Image.open(fixed_path))
-    fixed = cv2.cvtColor(fixed, cv2.COLOR_RGB2GRAY)
-    moving = cv2.cvtColor(moving, cv2.COLOR_RGB2GRAY)
+    
+    moving_path = '/sample/sample-moving.bmp'
+    fixed_path = '/sample/sample-fixed.bmp'
+    moving_seg_path = '/sample/sample-moving-mask.bmp'
+    fixed_seg_path = '/sample/sample-fixed-mask.bmp'
 
-    # moving_seg = np.array(Image.open(moving_seg_path))
-    # fixed_seg = np.array(Image.open(fixed_seg_path))
+    moving_seg = np.array(Image.open(moving_seg_path))
+    fixed_seg = np.array(Image.open(fixed_seg_path))
 
-    _, moving_seg = inputimage(moving)
-    _, fixed_seg = inputimage(fixed)
     length = moving.shape[0]
 
     flag = predict(moving, fixed, moving_seg, fixed_seg, length, filename, save=False, output_path=output_path,
                    joint=joint)
 
-    '''
-    set picture
-    '''
-    image_list = os.listdir(root_path + 'moving')
-    # image_list = hongkong_list
-    output_path = '../Result/Registration_image/'
-    # output_list = os.listdir(output_path)
-    # with open(output_path + 'JSN.txt', 'a+', encoding='utf-8') as test:
-    #     test.truncate(0)
 
-    jointArr = ['0_0', '0_1', '1_1', '1_2', '2_1', '2_2', '3_1', '3_2', '4_1', '4_2']
-    jointArr = ['2_2', '3_1', '3_2', '4_1', '4_2']
-    # select_list = ['123_0_0_002', '011_0_1_032', '113_0_1_019', '113_0_1_032', '113_0_1_025', '077_1_1_019',
-    #                '159_1_1_000',
-    #                '044_1_2_002', '097_1_2_001', '108_1_2_002', '113_1_2_033',
-    #                '055_2_1_002', '011_2_2_011', '113_2_2_012', '113_2_2_004', '085_2_2_002', '068_2_2_002',
-    #                '011_3_1_002', '046_3_1_001', '113_3_1_010', '113_3_1_012', '002_3_2_001', '010_3_2_020',
-    #                '077_3_2_004', '181_3_2_000',
-    #                '062_4_1_002', '077_4_1_014', '109_4_1_002', '184_4_1_015',
-    #                '008_4_2_001', '083_4_2_001']
-    # 063_1_2_000
-
-    # for joint in jointArr:
-    #     print(joint)
-    #     count = 0
-    #     for i in image_list:
-    #         filename = i[:-4]
-    #         joint_num = i[4:7]
-    #
-    #         if joint_num == joint:
-    #             # if filename + '.png' not in output_list:
-    #             # if filename in select_list:
-    #                 moving_path = root_path + 'moving/{}.bmp'.format(filename)
-    #                 fixed_path = root_path + 'fixed/{}.bmp'.format(filename)
-    #                 moving_seg_path = root_path + 'moving_seg/{}.bmp'.format(filename)
-    #                 fixed_seg_path = root_path + 'fixed_seg/{}.bmp'.format(filename)
-    #                 moving = np.array(Image.open(moving_path))
-    #                 fixed = np.array(Image.open(fixed_path))
-    #                 moving_seg = np.array(Image.open(moving_seg_path))
-    #                 fixed_seg = np.array(Image.open(fixed_seg_path))
-    #                 # moving_org, moving_seg = inputimage_path(moving_path)
-    #                 # fixed_org, fixed_seg = inputimage_path(fixed_path)
-    #                 length = moving.shape[0]
-    #                 flag = predict(moving, fixed, moving_seg, fixed_seg, length, filename, save=True, output_path=output_path, joint=joint)
-    #                 if flag:
-    #                     count += 1
-    #                     print('Count:', joint, count)
-    #         # if count == 20:
-    #         #     break

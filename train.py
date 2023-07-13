@@ -22,14 +22,13 @@ from model.model_ResCNN_mask_3 import Registration_ResCNN_3
 
 
 def train(net, pretrain_path, device, data_path, epochs=40, batch_size=1, lr=0.00001, resize=160):
-    # 评估list
     train_Loss_list_step = []
     train_loss_list_epoch = []
     train_loss_var_list = []
     train_loss_mean_list = []
     lr_out = lr
 
-    # 加载数据集
+    # dataset loading
     print('Training Device:', device)
     transform = transforms.Compose([transforms.Resize((resize, resize)),
                                     transforms.ToTensor(),
@@ -41,9 +40,9 @@ def train(net, pretrain_path, device, data_path, epochs=40, batch_size=1, lr=0.0
                                                batch_size=batch_size,
                                                shuffle=True)
     print('Data Loading Finished')
-    # 装载参数
+    # pertrain parameters loading
     # net.load_state_dict(torch.load(pretrain_path, map_location=torch.device('cpu')))
-    # 定义优化器
+    # optimizer definition
     optimizer = optim.SGD(params=net.parameters(), lr=lr, momentum=0.9, weight_decay=1e-2)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer=optimizer, mode='min', factor=0.5, patience=10,
                                                            verbose=False,
@@ -51,7 +50,7 @@ def train(net, pretrain_path, device, data_path, epochs=40, batch_size=1, lr=0.0
                                                            min_lr=0,
                                                            eps=1e-20
                                                            )
-    # 定义loss
+    # loss definition
     criterion = nn.MSELoss()
 
     criterion_upper = nn.MSELoss()
@@ -60,41 +59,37 @@ def train(net, pretrain_path, device, data_path, epochs=40, batch_size=1, lr=0.0
 
     training_image_show = []
 
-    # 训练epoch
+    # train epoch
     for epoch in range(epochs):
         print('Epoch:', epoch + 1, '/', epochs, 'lr:', lr_out)
         lr_out = optimizer.state_dict()['param_groups'][0]['lr']
         net.train()
         step = 0
         for moving, fixed, moving_seg, fixed_seg in train_loader:
-            # 装载数据
+            # data loading
             moving = moving.to(device=device, dtype=torch.float32)
             fixed = fixed.to(device=device, dtype=torch.float32)
             moving_seg = moving_seg.to(device=device, dtype=torch.float32)
             fixed_seg = fixed_seg.to(device=device, dtype=torch.float32)
 
-            # 正向传播
+            # forward
             optimizer.zero_grad()
 
             moving_reg, fixed_crop, output = net(moving, fixed, moving_seg, fixed_seg)
 
-            # 可视化
             if step % 5 == 0:
                 training_image_show.append(
                     [moving_reg.cpu().detach().numpy()[0][0], output.cpu().detach().numpy()[0]])
 
-            # 计算loss
-            # loss = criterion(moving_reg, fixed_crop)
-
+            # loss
             loss_upper = criterion_upper(moving_reg[:, 0], fixed_crop[:, 0])
             loss_lower = criterion_lower(moving_reg[:, 1], fixed_crop[:, 1])
 
             loss = loss_upper + loss_lower
-            # 反向传播
+
             loss.backward()
             optimizer.step()
 
-            # 评价step打印
             step = step + 1
             train_Loss_list_step.append(loss.item())
             train_loss_list_epoch.append(loss.item())
@@ -125,12 +120,12 @@ def train(net, pretrain_path, device, data_path, epochs=40, batch_size=1, lr=0.0
             else:
                 torch.save(net, 'model/parameters/best_model_1.pth')
 
-        # 更新lr策略
+        # lr refresh
         scheduler.step(train_loss_mean)
-        # 评价epoch打印
+
         print('Epoch:', epoch + 1, 'Train_Loss_var:', train_loss_var, 'Train_Loss_mean:', train_loss_mean)
         train_loss_list_epoch = []
-        # 展示图片
+        # show image
         plt.figure(figsize=(12.0, 6.0))
         image_show_len = len(training_image_show)
         for i in range(image_show_len):
@@ -174,10 +169,9 @@ def train(net, pretrain_path, device, data_path, epochs=40, batch_size=1, lr=0.0
 if __name__ == "__main__":
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     net = Registration_ResCNN_3()
-    # net = Registration_ResCNN()
     net.to(device=device)
     data_path = "../Data/phantom_dataset"
-    pretrain_path = 'model/parameters/best_model_1_1202.pth'
+    pretrain_path = 'pretain model path'
     start = time.time()
     train(net=net, pretrain_path=pretrain_path, device=device, data_path=data_path, epochs=30, batch_size=10, lr=0.001,
           resize=224)
