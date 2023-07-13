@@ -16,12 +16,7 @@ import copy
 from openpyxl import Workbook
 from openpyxl import load_workbook
 
-from model.model_VGG import Registration_VGG
-from model.model_CNN import Registration_CNN
-from model.model_ResCNN_mask import Registration_ResCNN
-# from model.model_ResCNN_mask_2 import Registration_ResCNN_2
 from model.model_ResCNN_mask_3 import Registration_ResCNN_3
-from model.model_VGGPlus import Registration_VGGPlus
 
 
 def inputimage(image):
@@ -97,13 +92,10 @@ def normalization_both(image_1, image_2):
     return image_1, image_2, np.max(image_1)
 
 
-def predict(moving, fixed, moving_seg, fixed_seg, length, filename, save, output_path, joint):
-    plt.imshow(moving)
-    plt.show()
-    print(moving.shape)
+def predict(moving, fixed, moving_seg, fixed_seg, length):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     net = Registration_ResCNN_3()
-    net.load_state_dict(torch.load('../model/parameters/best_model_0301.pth', map_location='cpu'))
+    net.load_state_dict(torch.load('model/parameters/best_model_0301.pth', map_location='cpu'))
     net.to(device=device)
     net.eval()
     criterion = nn.MSELoss(size_average=1, reduce=0)
@@ -212,10 +204,8 @@ def predict(moving, fixed, moving_seg, fixed_seg, length, filename, save, output
 
     loss_org, loss_warp, max_value = normalization_both(loss_map_org, lossmap_result)
 
-    if save:
-        plt.figure(figsize=(10.6, 2.5), dpi=300)
-    else:
-        plt.figure(figsize=(10.6, 2.5))
+
+    plt.figure(figsize=(10.6, 2.5))
 
     color_bar = 'bone'
 
@@ -307,20 +297,20 @@ def predict(moving, fixed, moving_seg, fixed_seg, length, filename, save, output
 
 if __name__ == "__main__":
     output_path = '../Result/Registration_image/scaling'
-
-    joint = filename[4:7]
     
-    moving_path = '/sample/sample-moving.bmp'
-    fixed_path = '/sample/sample-fixed.bmp'
-    moving_seg_path = '/sample/sample-moving-mask.bmp'
-    fixed_seg_path = '/sample/sample-fixed-mask.bmp'
+    moving_path = 'sample/sample-moving.bmp'
+    fixed_path = 'sample/sample-fixed.bmp'
+    moving_seg_path = 'sample/sample-moving-mask.bmp'
+    fixed_seg_path = 'sample/sample-fixed-mask.bmp'
+
+    moving = np.array(Image.open(moving_path))
+    fixed = np.array(Image.open(fixed_path))
 
     moving_seg = np.array(Image.open(moving_seg_path))
     fixed_seg = np.array(Image.open(fixed_seg_path))
 
     length = moving.shape[0]
 
-    flag = predict(moving, fixed, moving_seg, fixed_seg, length, filename, save=False, output_path=output_path,
-                   joint=joint)
+    flag = predict(moving, fixed, moving_seg, fixed_seg, length)
 
 
