@@ -309,6 +309,9 @@ if __name__ == "__main__":
     moving_seg = np.array(Image.open(moving_seg_path))
     fixed_seg = np.array(Image.open(fixed_seg_path))
 
+    # _, moving_seg = inputimage(moving)
+    # _, fixed_seg = inputimage(fixed)
+
     length = moving.shape[0]
 
     flag = predict(moving, fixed, moving_seg, fixed_seg, length)
