@@ -12,12 +12,7 @@ import cv2
 
 from train_mask.dataset import Data_Loader
 import lossfuction as lf
-from model.model_VGG import Registration_VGG
-from model.model_CNN import Registration_CNN
-# from model.model_ResCNN import Registration_ResCNN
-from model.model_VGGPlus import Registration_VGGPlus
-from model.model_ResCNN_mask import Registration_ResCNN
-from model.model_ResCNN_mask_2 import Registration_ResCNN_2
+
 from model.model_ResCNN_mask_3 import Registration_ResCNN_3
 
 
