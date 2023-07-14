@@ -5,10 +5,10 @@ A new framework for monitoring joint space by quantifying joint space narrowing 
 
 
 # File Description
-JSNmeasurement: Package of segmentation and registration tasks. It is being further refined and optimized.
-Segmentation: For segmentation task.
-Sample: We provide a set of images to help better understand the registration algorithm of our approach.
-Others: For registration task.
+JSNmeasurement: Package of segmentation and registration tasks. It is being further refined and optimized.<br/>
+Segmentation: For segmentation task.<br/>
+Sample: We provide a set of images to help better understand the registration algorithm of our approach.<br/>
+Others: For registration task.<br/>
 
 # How to use registration method
 Please run the predict.py file. And modify the image input paths, including the fixed and moving paths and their corresponding masks paths. The output will be the display mode we have set.
